@@ -14,21 +14,21 @@ module buffer (
         ena_out <= 1'b0;
     end
     always @ (posedge ena) flag = 1'b1;
-    // allow read-during-write behavior
-    always @ (posedge clk) if (flag) begin
-        if (!cnt[6:4]) data[cnt[3:0]] = {addr_in, data_in};
-        data_out = data[cnt[6:3]][cnt[2:0]];
-        cnt = cnt + 1'b1;
-        ena_out = 1'b1;
-    end
-    // // avoid read-during-write behavior
-    // always @ (posedge clk) if (flag) begin
-    //     if (!cnt) data_out <= data_in[0];
-    //     else data_out <= data[cnt[6:3]][cnt[2:0]];
-    // end
+    // // allow read-during-write behavior
     // always @ (posedge clk) if (flag) begin
     //     if (!cnt[6:4]) data[cnt[3:0]] = {addr_in, data_in};
+    //     data_out = data[cnt[6:3]][cnt[2:0]];
     //     cnt = cnt + 1'b1;
     //     ena_out = 1'b1;
     // end
+    // avoid read-during-write behavior
+    always @ (posedge clk) if (flag) begin
+        if (!cnt) data_out <= data_in[0];
+        else data_out <= data[cnt[6:3]][cnt[2:0]];
+    end
+    always @ (posedge clk) if (flag) begin
+        if (!cnt[6:4]) data[cnt[3:0]] = {addr_in, data_in};
+        cnt = cnt + 1'b1;
+        ena_out = 1'b1;
+    end
 endmodule
