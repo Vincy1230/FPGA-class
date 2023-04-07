@@ -1,8 +1,8 @@
 `timescale 10ps/1ps
-module tb_divider_4();
+module tb_divider_8();
     reg clk, ena;
     wire clk_out;
-    divider_4 uut(
+    divider_8 uut(
         .clk(clk),
         .ena(ena),
         .clk_out(clk_out)
