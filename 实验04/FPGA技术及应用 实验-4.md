@@ -14,6 +14,8 @@
 
 设计分频程序将 6Hz 时钟信号分频为 1Hz 时钟信号.
 
+
+
 ## 实验代码
 
 ### 顶层模块
@@ -36,8 +38,10 @@
           .reset(reset)
       );
   endmodule
-
+  
   ```
+
+<div STYLE="page-break-after: always;"></div>
 
 ### 子模块
 
@@ -78,8 +82,10 @@
           end
           else cnt <= cnt + 2'b01;
   endmodule
-
+  
   ```
+
+
 
 ### Testbench
 
@@ -108,11 +114,21 @@
           #1000   $stop;
       end
   endmodule
-
+  
   ```
+
+
 
 ## 仿真波形图
 
 ![01](./01.png)
 
+
+
+
+
 ## 实验结果及总结
+
+1. 代码无误, 编译正确;
+
+1. 各个实验波形符合预期, 实验结果正确.

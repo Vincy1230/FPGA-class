@@ -12,6 +12,8 @@
 
 进行功能仿真, 将 Verilog 代码和仿真波形图整理入实验报告.
 
+
+
 ## 实验代码
 
 - **check_10111.v**
@@ -45,6 +47,8 @@
   endmodule
 
   ```
+
+  <div STYLE="page-break-after: always;"></div>
 
 - **tb_check_10111.v**
 
@@ -88,11 +92,21 @@
           #20 $stop;
       end
   endmodule
-
+  
   ```
+
+<div STYLE="page-break-after: always;"></div>
 
 ## 仿真波形图
 
 ![01](./01.png)
 
+
+
+
+
 ## 实验结果及总结
+
+1. 代码无误, 编译正确;
+
+1. 各个实验波形符合预期, 实验结果正确.
