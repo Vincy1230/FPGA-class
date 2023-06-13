@@ -117,46 +117,6 @@
 
   ```
 
-- **buffer.v**
-
-  ```verilog
-  module buffer (
-      // output reg flag,                // debug only
-      // output reg [6:0] cnt,           // debug only
-      input clk, ena,
-      input [3:0] addr_in, data_in,
-      output reg ena_out, data_out
-  );
-      reg flag;               // non debugging only
-      reg [6:0] cnt;          // non debugging only
-      reg [7:0] data [15:0];
-      initial begin
-          flag <= 1'b0;
-          cnt <= 7'b0000000;
-          ena_out <= 1'b0;
-      end
-      always @ (posedge ena) flag = 1'b1;
-      // // allow read-during-write behavior
-      // always @ (posedge clk) if (flag) begin
-      //     if (!cnt[6:4]) data[cnt[3:0]] = {addr_in, data_in};
-      //     data_out = data[cnt[6:3]][cnt[2:0]];
-      //     cnt = cnt + 1'b1;
-      //     ena_out = 1'b1;
-      // end
-      // avoid read-during-write behavior
-      always @ (posedge clk) if (flag) begin
-          if (!cnt) data_out <= data_in[0];
-          else data_out <= data[cnt[6:3]][cnt[2:0]];
-      end
-      always @ (posedge clk) if (flag) begin
-          if (!cnt[6:4]) data[cnt[3:0]] = {addr_in, data_in};
-          cnt = cnt + 1'b1;
-          ena_out = 1'b1;
-      end
-  endmodule
-
-  ```
-
 - **M_51_8.v**
 
   ```verilog
@@ -228,6 +188,8 @@
 
   ```
 
+  <div STYLE="page-break-after: always;"></div>
+
 - **RAM.v**
 
   ```verilog
@@ -244,6 +206,48 @@
 
 
 ### 三层模块
+
+- **buffer.v**
+
+  ```verilog
+  module buffer (
+      // output reg flag,                // debug only
+      // output reg [6:0] cnt,           // debug only
+      input clk, ena,
+      input [3:0] addr_in, data_in,
+      output reg ena_out, data_out
+  );
+      reg flag;               // non debugging only
+      reg [6:0] cnt;          // non debugging only
+      reg [7:0] data [15:0];
+      initial begin
+          flag <= 1'b0;
+          cnt <= 7'b0000000;
+          ena_out <= 1'b0;
+      end
+      always @ (posedge ena) flag = 1'b1;
+      // // allow read-during-write behavior
+      // always @ (posedge clk) if (flag) begin
+      //     if (!cnt[6:4]) data[cnt[3:0]] = {addr_in, data_in};
+      //     data_out = data[cnt[6:3]][cnt[2:0]];
+      //     cnt = cnt + 1'b1;
+      //     ena_out = 1'b1;
+      // end
+      // avoid read-during-write behavior
+      always @ (posedge clk) if (flag) begin
+          if (!cnt) data_out <= data_in[0];
+          else data_out <= data[cnt[6:3]][cnt[2:0]];
+      end
+      always @ (posedge clk) if (flag) begin
+          if (!cnt[6:4]) data[cnt[3:0]] = {addr_in, data_in};
+          cnt = cnt + 1'b1;
+          ena_out = 1'b1;
+      end
+  endmodule
+
+  ```
+
+  <div STYLE="page-break-after: always;"></div>
 
 - **P_to_S.v**
 
@@ -293,7 +297,7 @@
   
   ```
 
-
+  <div STYLE="page-break-after: always;"></div>
 
 ### TestBenches
 
@@ -362,6 +366,32 @@
 
   ```
 
+- **tb_M_51_8.v**
+
+  ```verilog
+  `timescale 10ps/1ps
+  module tb_M_51_8 ();
+      reg clk, ena;
+      wire m_out;
+      M_51_8 uut (
+          .clk(clk),
+          .ena(ena),
+          .m_out(m_out)
+      );
+      initial begin
+          clk = 1'b1;
+          forever #5 clk = ~clk;
+      end
+      initial begin
+          ena = 1'b0;
+          #100 ena = 1'b1;
+          #25 ena = 1'b0;
+          #1000 $stop;
+      end
+  endmodule
+
+  ```
+
 - **tb_buffer.v**
 
   ```verilog
@@ -408,32 +438,6 @@
           #10     addr_in = 4'b0000;  data_in = 4'b1010;
           #10     addr_in = 4'b0001;  data_in = 4'b1010;
           #2000   $stop;
-      end
-  endmodule
-
-  ```
-
-- **tb_M_51_8.v**
-
-  ```verilog
-  `timescale 10ps/1ps
-  module tb_M_51_8 ();
-      reg clk, ena;
-      wire m_out;
-      M_51_8 uut (
-          .clk(clk),
-          .ena(ena),
-          .m_out(m_out)
-      );
-      initial begin
-          clk = 1'b1;
-          forever #5 clk = ~clk;
-      end
-      initial begin
-          ena = 1'b0;
-          #100 ena = 1'b1;
-          #25 ena = 1'b0;
-          #1000 $stop;
       end
   endmodule
 
@@ -511,40 +515,114 @@
   
   ```
 
+### 辅助程序
+
+- **M序列模拟器.c**
+
+  ```c
+  #include <stdio.h>
+  unsigned __int32 ci, m_shift, m_musk = 0;
+  int len_ci;
+
+  __int32 scan_b(){
+      char ch[36];
+      int i, num = 0;
+      scanf("%s", ch);
+      for (i = 0; ch[i]; i++)
+          num = num << 1 | (ch[i] ^ '0');
+      return num;
+  }
+
+  void print_b(unsigned __int32 num, int len){
+      int i;
+      for (i = len - 1; i >= 0; i--)
+          putchar((num >> i & 1) ^ '0');
+      putchar('\n');
+  }
+
+  int main(){
+      printf("\n");
+      printf("----------------------------------------\n");
+      printf("* M 序列模拟器 | M-sequence simulator  *\n");
+      printf("----------------------------------------\n");
+      int i;
+      printf("\n请使用 8 进制数字输入 M 序列的反馈系数, \n");
+      printf("例如, M(23)_8 的序列发生器, 输入 23. \n");
+      printf("Use 8 decimal number to input ");
+      printf("the feedback coefficient of M sequence, \n");
+      printf("For example, M(23)_8, input 23. \n");
+      printf("请输入 | Please input: ");
+      scanf("%o", &ci);
+      while (ci & ~m_musk)
+          m_musk = m_musk << 1 | 1;
+      m_musk = m_musk >> 1;
+      len_ci = __builtin_popcount(m_musk);
+      printf("    └─> %d bits: (1)", len_ci + 1);
+      print_b(ci, len_ci);
+      printf("\n请使用 2 进制数字输入初始状态, \n");
+      printf("例如, \"-> 0 0 0 1 ->\" 的初始状态为 0001. \n");
+      printf("Use 2 decimal number to input the initial state, \n");
+      printf("For example, \"-> 0 0 0 1 ->\" , input 0001. \n");
+      printf("请输入 | Please input: ");
+      m_shift = scan_b();
+      printf("    └─> %d regs: ", len_ci);
+      print_b(m_shift, len_ci);
+      m_shift &= m_musk;
+      printf("\n");
+      printf("----------------------------------------\n");
+      printf("     M 序列输出 | M-sequence output     \n");
+      printf("----------------------------------------\n\n");
+      printf("按回车键持续输出, 任意输入退出. \n");
+      printf("Press Enter to continue and any other key to exit. \n");
+      while (getchar() == '\n'){
+          printf("\n");
+          for (i = 0; i < 32; i++){
+              putchar((m_shift & 1) ^ '0');
+              m_shift |= __builtin_parity(m_shift & ci) << len_ci;
+              m_shift >>= 1;
+              putchar(' ');
+          }
+          printf("\n... ");
+      }
+      return 0;
+  }
+
+  ```
+
 <div STYLE="page-break-after: always;"></div>
 
 ### 测试波形
 
 - **FPGAproj2301**
 
-  ![01](./01.png)
+  <img src="./01.png" alt="01" style="zoom: 25%;" />
 
   
 
 - **data_source**
 
-  ![02](./02.png)
-
-  <div STYLE="page-break-after: always;"></div>
-
-- **buffer**
-
-  ![03](./03.png)
+  <img src="./02.png" alt="02" style="zoom: 25%;" />
 
   
 
 - **M_51_8**
 
-  ![04](./04.png)
+  <img src="./03.png" alt="03" style="zoom: 25%;" />
 
   <div STYLE="page-break-after: always;"></div>
 
+- **buffer**
+
+  <img src="./04.png" alt="04" style="zoom:25%;" />
+
+  
+
 - **P_to_S**
 
-  ![05](./05.png)
+  <img src="./05.png" alt="05" style="zoom:25%;" />
 
   
 
 - **divider_8**
 
-  ![06](./06.png)
+  <img src="./06.png" alt="06" style="zoom:25%;" />
